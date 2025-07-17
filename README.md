@@ -1,15 +1,233 @@
-# sp-mcp
+# SP-MCP - System Process Model Context Protocol Server
 
-To install dependencies:
+A Model Context Protocol (MCP) server for system processes that provides development tools like test running, package management, file operations, and development server management. Built for Bun runtime.
 
-```bash
-bun install
+## Setup
+
+The server communicates via JSON-RPC over stdin/stdout following the MCP protocol. It's designed to be used with MCP clients like Claude Desktop or VS Code.
+
+### VS Code MCP Configuration
+
+Add this server to your VS Code MCP configuration file (`~/.vscode/mcp_servers.json` or similar):
+
+```json
+{
+  "mcpServers": {
+    "sp-mcp": {
+      "command": "bunx",
+      "args": ["sp-mcp"],
+      "env": {
+        "MCP_PACKAGE_MANAGER": "bun",
+        "MCP_TESTS_ENABLED": "true",
+        "MCP_E2E_TESTS_ENABLED": "true",
+        "MCP_DEV_COMMAND": "dev"
+      }
+    }
+  }
+}
 ```
 
-To run:
+### Claude Desktop Configuration
 
-```bash
-bun run index.ts
+Add to your Claude Desktop configuration file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+```json
+{
+  "mcpServers": {
+    "sp-mcp": {
+      "command": "bunx",
+      "args": ["sp-mcp", "--package-manager", "bun", "--tests-enabled", "true"]
+    }
+  }
+}
 ```
 
-This project was created using `bun init` in bun v1.2.5. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+### Basic Usage
+
+```bash
+# Run with default configuration
+bunx sp-mcp
+
+# Run with custom configuration
+bunx sp-mcp --package-manager bun --tests-enabled true
+
+# Using environment variables
+MCP_PACKAGE_MANAGER=npm MCP_TESTS_ENABLED=true bunx sp-mcp
+```
+
+## Configuration
+
+The server can be configured via environment variables or command line arguments. Command line arguments take priority over environment variables.
+
+### Environment Variables
+
+| Variable | Description | Type | Default |
+|----------|-------------|------|---------|
+| `MCP_PACKAGE_MANAGER` | Package manager to use for running commands | `yarn\|npm\|bun` | `yarn` |
+| `MCP_E2E_TESTS_ENABLED` | Enable end-to-end tests functionality | `true\|false` | `false` |
+| `MCP_E2E_TEST_COMMAND` | Command to run e2e tests in package.json | `string` | `test:e2e` |
+| `MCP_TESTS_ENABLED` | Enable unit tests functionality | `true\|false` | `false` |
+| `MCP_TEST_COMMAND` | Command to run unit tests in package.json | `string` | `test` |
+| `MCP_DEV_COMMAND` | Command to start development server in package.json | `string` | `dev` |
+| `MCP_BANNED_SCRIPTS` | List of package.json scripts that are not allowed to run | `comma-separated list` | `deploy:prod,dev,add` |
+| `MCP_TYPEORM_ENABLED` | Enable TypeORM migration features | `true\|false` | `false` |
+| `MCP_MIGRATION_GENERATE_COMMAND` | Command to generate TypeORM migration files | `string` | `migration:generate` |
+
+### Command Line Arguments
+
+All environment variables have corresponding command line arguments that override environment settings:
+
+| Argument | Description | Example |
+|----------|-------------|---------|
+| `--package-manager` | Same as `MCP_PACKAGE_MANAGER` | `--package-manager bun` |
+| `--e2e-tests-enabled` | Same as `MCP_E2E_TESTS_ENABLED` | `--e2e-tests-enabled true` |
+| `--e2e-test-command` | Same as `MCP_E2E_TEST_COMMAND` | `--e2e-test-command test:e2e` |
+| `--tests-enabled` | Same as `MCP_TESTS_ENABLED` | `--tests-enabled true` |
+| `--test-command` | Same as `MCP_TEST_COMMAND` | `--test-command test` |
+| `--dev-command` | Same as `MCP_DEV_COMMAND` | `--dev-command dev` |
+| `--banned-scripts` | Same as `MCP_BANNED_SCRIPTS` | `--banned-scripts deploy:prod,build:prod` |
+| `--typeorm-enabled` | Same as `MCP_TYPEORM_ENABLED` | `--typeorm-enabled true` |
+| `--migration-generate-command` | Same as `MCP_MIGRATION_GENERATE_COMMAND` | `--migration-generate-command migration:generate` |
+
+## Available Tools
+
+The server provides the following MCP tools:
+
+### Development Tools
+
+- **`dev-start`** - Start development server using pm2
+- **`dev-logs`** - Get development server logs from pm2
+
+### Testing Tools (when enabled)
+
+- **`run`** - Run unit tests or e2e tests
+  - Supports file-specific testing
+  - Supports test name filtering
+  - Automatic detection of e2e tests by file extension
+
+### Package Management Tools
+
+- **`package-run`** - Run package manager commands (respects banned scripts)
+- **`install`** - Install packages as dependencies or devDependencies
+
+### File Management Tools
+
+- **`delete-project-file`** - Delete files from the project
+
+### Node.js Tools
+
+- **`node`** - Run Node.js commands in the project directory
+
+### Database Tools (when TypeORM is enabled)
+
+- **`migrations-generate`** - Generate TypeORM migration files
+
+## Examples
+
+### Basic Development Setup
+
+```bash
+# Start with npm package manager and tests enabled
+MCP_PACKAGE_MANAGER=npm MCP_TESTS_ENABLED=true bunx sp-mcp
+
+# Or using command line arguments
+bunx sp-mcp --package-manager npm --tests-enabled true
+```
+
+### Full Featured Setup
+
+```bash
+# Enable all features with custom commands
+bunx sp-mcp \
+  --package-manager bun \
+  --tests-enabled true \
+  --e2e-tests-enabled true \
+  --test-command "test:unit" \
+  --e2e-test-command "test:e2e" \
+  --dev-command "start:dev" \
+  --typeorm-enabled true \
+  --migration-generate-command "db:migration:generate"
+```
+
+### Environment Variable Configuration
+
+```bash
+# Set up environment variables
+export MCP_PACKAGE_MANAGER=bun
+export MCP_TESTS_ENABLED=true
+export MCP_E2E_TESTS_ENABLED=true
+export MCP_DEV_COMMAND=start:dev
+export MCP_BANNED_SCRIPTS=deploy:prod,build:prod,release
+
+# Run server
+bunx sp-mcp
+```
+
+### Mixed Configuration (Args Override Env)
+
+```bash
+# Environment sets defaults, arguments override specific settings
+MCP_PACKAGE_MANAGER=yarn MCP_TESTS_ENABLED=false bunx sp-mcp --package-manager bun --tests-enabled true
+# Result: Uses bun as package manager with tests enabled
+```
+
+### TypeORM Database Development
+
+```bash
+# Enable TypeORM features for database development
+bunx sp-mcp \
+  --package-manager npm \
+  --typeorm-enabled true \
+  --migration-generate-command "typeorm:migration:generate"
+```
+
+## Configuration Testing
+
+Test your configuration with the included test script:
+
+```bash
+# Test current configuration
+node test-config.js
+
+# Test with specific arguments
+node test-config.js --package-manager bun --tests-enabled true
+
+# Show configuration help
+node test-config.js --help
+```
+
+## Security
+
+The `bannedScripts` configuration prevents certain package.json scripts from being executed through the `package-run` tool. By default, scripts like `deploy:prod`, `dev`, and `add` are banned to prevent accidental deployment or server startup through the wrong tool.
+
+## Requirements
+
+- **Bun**: 1.0.0 or higher
+- **PM2**: Required for development server management
+- **TypeScript**: ^5 (peer dependency)
+
+## License
+
+MIT
+
+## Contributing
+
+This project is built with Bun and TypeScript. To contribute:
+
+1. Install Bun
+2. Install dependencies: `bun install`
+3. Run tests: `bun test` (if test scripts are configured)
+4. Start development: `bun run index.ts`
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Server not starting**: Check that Bun is properly installed and version is 1.0.0+
+2. **Tests not running**: Ensure `testsEnabled` or `e2eTestsEnabled` is set to `true`
+3. **Package manager commands failing**: Verify the correct package manager is configured
+4. **PM2 issues**: Ensure PM2 is installed globally: `npm install -g pm2`
+
+### Debug Mode
+
+Enable debug logging by setting the appropriate log level in your MCP client configuration.
