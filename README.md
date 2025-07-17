@@ -1,6 +1,6 @@
 # SP-MCP - System Process Model Context Protocol Server
 
-A Model Context Protocol (MCP) server for system processes that provides development tools like test running, package management, file operations, and development server management. Built for Bun runtime.
+A Model Context Protocol (MCP) server for system processes that provides development tools like test running, package management, file operations, and development server management. Built for Nodejs or other javascript/typescript runtimes.
 
 ## Setup
 
@@ -93,34 +93,74 @@ All environment variables have corresponding command line arguments that overrid
 
 The server provides the following MCP tools:
 
-### Development Tools
+### Always Available Tools
 
+#### Development Tools
 - **`dev-start`** - Start development server using pm2
-- **`dev-logs`** - Get development server logs from pm2
+  - Uses the configured `devCommand` (default: `dev`)
+  - Runs the process in background using pm2
+  - No additional configuration required
 
-### Testing Tools (when enabled)
+- **`dev-logs`** - Get development server logs from pm2
+  - Retrieves logs from the pm2 process
+  - Supports configurable number of log lines (max 200)
+  - No additional configuration required
+
+#### Package Management Tools
+- **`package-run`** - Run package manager commands
+  - Uses the configured `packageManager` (yarn/npm/bun)
+  - Respects the `bannedScripts` configuration
+  - No additional configuration required
+
+- **`install`** - Install packages as dependencies or devDependencies
+  - Uses the configured `packageManager` (yarn/npm/bun)
+  - Supports both regular and dev dependencies
+  - No additional configuration required
+
+#### File Management Tools
+- **`delete-project-file`** - Delete files from the project
+  - Deletes specified files from the project directory
+  - No additional configuration required
+
+#### Node.js Tools
+- **`node`** - Run Node.js commands in the project directory
+  - Execute any Node.js command or script
+  - No additional configuration required
+
+### Conditional Tools
+
+#### Testing Tools
+**Requirements**: `MCP_TESTS_ENABLED=true` OR `MCP_E2E_TESTS_ENABLED=true`
 
 - **`run`** - Run unit tests or e2e tests
-  - Supports file-specific testing
-  - Supports test name filtering
-  - Automatic detection of e2e tests by file extension
+  - **Unit tests**: Available when `MCP_TESTS_ENABLED=true`
+  - **E2E tests**: Available when `MCP_E2E_TESTS_ENABLED=true`
+  - Supports file-specific testing (`fileName` parameter)
+  - Supports test name filtering (`testName` parameter)
+  - Automatic detection of e2e tests by `.e2e-spec.ts` file extension
+  - Uses configured `testCommand` (default: `test`) for unit tests
+  - Uses configured `e2eTestCommand` (default: `test:e2e`) for e2e tests
 
-### Package Management Tools
-
-- **`package-run`** - Run package manager commands (respects banned scripts)
-- **`install`** - Install packages as dependencies or devDependencies
-
-### File Management Tools
-
-- **`delete-project-file`** - Delete files from the project
-
-### Node.js Tools
-
-- **`node`** - Run Node.js commands in the project directory
-
-### Database Tools (when TypeORM is enabled)
+#### Database Tools
+**Requirements**: `MCP_TYPEORM_ENABLED=true`
 
 - **`migrations-generate`** - Generate TypeORM migration files
+  - Generates new migration files when entities are changed
+  - Uses configured `migrationGenerateCommand` (default: `migration:generate`)
+  - Creates migration files in the migrations directory
+
+### Tool Availability Summary
+
+| Tool | Always Available | Requires Configuration |
+|------|------------------|------------------------|
+| `dev-start` | ✅ | None |
+| `dev-logs` | ✅ | None |
+| `package-run` | ✅ | None |
+| `install` | ✅ | None |
+| `delete-project-file` | ✅ | None |
+| `node` | ✅ | None |
+| `run` | ❌ | `MCP_TESTS_ENABLED=true` or `MCP_E2E_TESTS_ENABLED=true` |
+| `migrations-generate` | ❌ | `MCP_TYPEORM_ENABLED=true` |
 
 ## Examples
 
