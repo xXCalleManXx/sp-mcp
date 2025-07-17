@@ -1,18 +1,37 @@
 import { z } from "zod";
 import { runCLI } from "../utils/cli.js";
 import { getConfig } from "../config.js";
+import { logger } from "../utils/logger.js";
 
-export const testRunSchema = {
+// Create the base schema
+const baseSchema = {
     fileName: z.string().optional().describe('Optional file name to run specific tests. If not provided, all tests are run.'),
     testName: z.string().optional().describe('Optional test name to run specific tests. If not provided, all tests are run. Can be a regex string'),
-    isE2E: z.boolean().optional().describe('Optional flag to indicate if the tests are e2e tests. If not provided, it defaults to false.'),
 };
+
+// Conditionally add isE2E field based on configuration
+const createTestRunSchema = () => {
+    const config = getConfig();
+    const schema = { ...baseSchema };
+    
+    // Only add isE2E field if e2e tests are enabled
+    if (config.e2eTestsEnabled) {
+        (schema as any).isE2E = z.boolean().optional().describe('Optional flag to indicate if the tests are e2e tests. If not provided, it defaults to false.');
+    }
+    
+    return schema;
+};
+
+export const testRunSchema = createTestRunSchema();
 
 export const testRunHandler = async ({ fileName, testName, isE2E }: { fileName?: string, testName?: string, isE2E?: boolean }) => {
     const config = getConfig();
     
+    // If e2e tests are disabled, ignore the isE2E parameter
+    const effectiveIsE2E = config.e2eTestsEnabled ? (isE2E || false) : false;
+    
     // Check if tests are enabled
-    if (!config.testsEnabled && !isE2E) {
+    if (!config.testsEnabled && !effectiveIsE2E) {
         return {
             content: [{
                 type: "text" as const,
@@ -21,7 +40,7 @@ export const testRunHandler = async ({ fileName, testName, isE2E }: { fileName?:
         };
     }
     
-    if (!config.e2eTestsEnabled && isE2E) {
+    if (!config.e2eTestsEnabled && effectiveIsE2E) {
         return {
             content: [{
                 type: "text" as const,
@@ -30,7 +49,7 @@ export const testRunHandler = async ({ fileName, testName, isE2E }: { fileName?:
         };
     }
 
-    let _isE2E = isE2E || false;
+    let _isE2E = effectiveIsE2E;
 
     const baseCommand = config.packageManager;
     const args: string[] = [];
@@ -60,11 +79,11 @@ export const testRunHandler = async ({ fileName, testName, isE2E }: { fileName?:
     }
 
     const pwd = process.cwd();
-    console.log(`Current working directory: ${pwd}`);
+    logger.debug(`Current working directory: ${pwd}`);
 
     // Run the command using the runCLI function
     const result = await runCLI(baseCommand, [testCommand, ...args]);
-    console.log(`Command result: ${result}`);
+    logger.debug(`Command result: ${result}`);
 
     return {
         content: [{

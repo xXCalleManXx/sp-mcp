@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { runCLI } from "../utils/cli.js";
 import { getConfig } from "../config.js";
+import { logger } from "../utils/logger.js";
 
 export const yarnRunSchema = {
     command: z.string().describe('The package manager command to run.'),
@@ -20,7 +21,7 @@ export const yarnRunHandler = async ({ command, args = [] }: { command: string, 
     }
 
     const fullCommand = `${config.packageManager} ${command} ${args.join(' ')}`;
-    console.log(`Running command: ${fullCommand}`);
+    logger.debug(`Running command: ${fullCommand}`);
     
     const result = await runCLI(config.packageManager, [command, ...args]);
     
@@ -60,7 +61,7 @@ export const installHandler = async ({ packages, dev }: { packages: string[], de
     args.push(...packages);
     
     const command = `${config.packageManager} ${args.join(' ')}`;
-    console.log(`Installing packages: ${command}`);
+    logger.debug(`Installing packages: ${command}`);
     
     const result = await runCLI(config.packageManager, args);
     

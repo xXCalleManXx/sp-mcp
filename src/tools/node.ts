@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { runCLI } from "../utils/cli.js";
+import { logger } from "../utils/logger.js";
 
 export const nodeSchema = {
     command: z.string().describe('The Node.js command to run. Could also be a file'),
@@ -8,11 +9,11 @@ export const nodeSchema = {
 
 export const nodeHandler = async ({ command, args = [] }: { command: string, args?: string[] }) => {
     const pwd = process.cwd();
-    console.log(`Current working directory: ${pwd}`);
+    logger.debug(`Current working directory: ${pwd}`);
 
     // Construct the full command
     const fullCommand = `node ${command} ${args.join(' ')}`;
-    console.log(`Running command: ${fullCommand}`);
+    logger.debug(`Running command: ${fullCommand}`);
 
     // Run the command using the runCLI function
     const result = await runCLI("node", [command, ...args]);

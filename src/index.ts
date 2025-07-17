@@ -5,6 +5,7 @@ export * from "./config.js";
 export * from "./utils/cli.js";
 export * from "./utils/project.js";
 export * from "./utils/pm2.js";
+export * from "./utils/logger.js";
 
 // Tool exports
 export * from "./tools/development.js";

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "./utils/logger";
 
 // Define the configuration schema with descriptions
 const ConfigSchema = z.object({
@@ -6,13 +7,13 @@ const ConfigSchema = z.object({
         .default('yarn')
         .describe('Package manager to use for running commands'),
     e2eTestsEnabled: z.boolean()
-        .default(true)
+        .default(false)
         .describe('Enable end-to-end tests functionality'),
     e2eTestCommand: z.string()
         .default('test:e2e')
         .describe('Command to run e2e tests in package.json'),
     testsEnabled: z.boolean()
-        .default(true)
+        .default(false)
         .describe('Enable unit tests functionality'),
     testCommand: z.string()
         .default('test')
@@ -114,10 +115,13 @@ function parseEnvironmentVariables(): Partial<Config> {
 /**
  * Parse command line arguments into config object
  */
-function parseCommandLineArguments(args: string[] = process.argv.slice(2)): Partial<Config> {
+export function parseCommandLineArguments(args: string[] = process.argv.slice(2)): Partial<Config> {
+    logger.debug(`Arg mappings: ${JSON.stringify(ARG_MAPPINGS)}`);
     const config: Partial<Config> = {};
     
     for (let i = 0; i < args.length; i++) {
+        // Arg example value: --tests-enabled=true
+        // Arg example key: --tests-enabled
         const arg = args[i];
         
         if (arg && arg in ARG_MAPPINGS) {
@@ -145,9 +149,13 @@ function parseCommandLineArguments(args: string[] = process.argv.slice(2)): Part
 export function loadConfig(args?: string[]): Config {
     // Start with environment variables
     const envConfig = parseEnvironmentVariables();
+
+    logger.debug(`Parsed environment variables: ${JSON.stringify(envConfig)}`);
     
     // Override with command line arguments (higher priority)
     const argConfig = parseCommandLineArguments(args);
+
+    logger.debug(`Parsed command line arguments: ${JSON.stringify(argConfig)}`);
     
     // Merge configurations (args override env)
     const mergedConfig = {
@@ -158,7 +166,8 @@ export function loadConfig(args?: string[]): Config {
     // Validate and apply defaults
     const result = ConfigSchema.parse(mergedConfig);
     
-    console.log('Loaded configuration:', result);
+    // Don't log in production - it interferes with MCP JSON protocol
+    // console.log('Loaded configuration:', result);
     return result;
 }
 
@@ -187,7 +196,7 @@ export function resetConfig(): void {
 export function printConfigHelp(): void {
     const schemaKeys = Object.keys(ConfigSchema.shape) as Array<keyof Config>;
     
-    console.log(`
+    logger.debug(`
 MCP Server Configuration Help
 
 Environment Variables:`);
@@ -211,19 +220,19 @@ Environment Variables:`);
             typeHint = ` (${enumValues.join('|')})`;
         }
         
-        console.log(`  ${envKey.padEnd(30)} ${description}${typeHint}, default: ${JSON.stringify(defaultValue)}`);
+        logger.error(`  ${envKey.padEnd(30)} ${description}${typeHint}, default: ${JSON.stringify(defaultValue)}`);
     });
     
-    console.log(`
+    logger.error(`
 Command Line Arguments (override environment variables):`);
     
     schemaKeys.forEach(key => {
         const argKey = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
         const envKey = `MCP_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
-        console.log(`  ${argKey.padEnd(35)} Same as ${envKey}`);
+        logger.error(`  ${argKey.padEnd(35)} Same as ${envKey}`);
     });
     
-    console.log(`
+    logger.error(`
 Examples:
   # Using environment variables
   MCP_PACKAGE_MANAGER=npm MCP_E2E_TESTS_ENABLED=false bun run index.ts

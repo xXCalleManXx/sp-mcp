@@ -3,6 +3,7 @@ import { runCLI } from "../utils/cli.js";
 import { getProjectName } from "../utils/project.js";
 import { getPM2Process } from "../utils/pm2.js";
 import { getConfig } from "../config.js";
+import { logger } from "../utils/logger.js";
 
 export const devLogsSchema = {
     lines: z.number().optional().describe('Optional number of lines to fetch from the logs. If not provided, it defaults to 30. Max 200 lines can be fetched.'),
@@ -24,7 +25,7 @@ export const devLogsHandler = async ({ lines }: { lines?: number }) => {
     const logLines = Math.min(lines || 30, 200);
     const result = await runCLI("pm2", ['logs', pm2Process.pmID.toString(), '--lines', logLines.toString(), '--nostream']);
 
-    console.log(`PM2 logs for ${pm2Process.name}:`);
+    logger.debug(`PM2 logs for ${pm2Process.name}:`);
     return {
         content: [{
             type: "text" as const,
