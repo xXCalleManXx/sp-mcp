@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { loadConfig, getConfig } from "./config.js";
+import { loadConfig, getConfig, getVersion } from "./config.js";
 
 // Import tool handlers
 import { devLogsSchema, devLogsHandler, devStartSchema, devStartHandler } from "./tools/development.js";
@@ -10,6 +10,7 @@ import { yarnRunSchema, yarnRunHandler, installSchema, installHandler } from "./
 import { deleteProjectFileSchema, deleteProjectFileHandler } from "./tools/file-management.js";
 import { migrationsGenerateSchema, migrationsGenerateHandler } from "./tools/database.js";
 import { logger } from "./utils/logger.js";
+import { runCLI } from "./utils/cli.js";
 
 export const createServer = () => {
     // Load configuration first
@@ -89,6 +90,10 @@ export const start = async () => {
     process.env.NODE_NO_WARNINGS = '1';
     
     const server = createServer();
+
+    const version = await getVersion();
+
+    logger.debug(`Starting MCP server version ${version}`);
     
     // Start receiving messages on stdin and sending messages on stdout
     const transport = new StdioServerTransport();

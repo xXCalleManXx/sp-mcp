@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { logger } from "./utils/logger";
+import { runCLI } from "./utils/cli";
 
 // Define the configuration schema with descriptions
 const ConfigSchema = z.object({
@@ -202,14 +203,29 @@ export function resetConfig(): void {
     configInstance = null;
 }
 
+
+
+export const getVersion = async () => {
+    // Get the version from the package.json file
+    try {
+        const packageJsonRaw = await runCLI("cat", ["package.json"]);
+        const packageJson = JSON.parse(packageJsonRaw);
+        return packageJson.version || "1.0.0";
+    } catch (error) {
+        logger.error("Failed to read package.json version:", error);
+        return "1.0.0";
+    }
+}
+
 /**
  * Generate configuration help dynamically from schema
  */
-export function printConfigHelp(): void {
+export async function printConfigHelp(): Promise<void> {
     const schemaKeys = Object.keys(ConfigSchema.shape) as Array<keyof Config>;
+    const version = await getVersion();
     
     logger.debug(`
-MCP Server Configuration Help
+MCP Server Configuration Help (version ${version}):
 
 Environment Variables:`);
     
