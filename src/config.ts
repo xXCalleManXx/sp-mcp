@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { logger } from "./utils/logger";
 import { runCLI } from "./utils/cli";
+import packageJson from "../package.json";
 
 // Define the configuration schema with descriptions
 const ConfigSchema = z.object({
@@ -207,14 +208,7 @@ export function resetConfig(): void {
 
 export const getVersion = async () => {
     // Get the version from the package.json file
-    try {
-        const packageJsonRaw = await runCLI("cat", ["package.json"]);
-        const packageJson = JSON.parse(packageJsonRaw);
-        return packageJson.version || "1.0.0";
-    } catch (error) {
-        logger.error("Failed to read package.json version:", error);
-        return "1.0.0";
-    }
+    return packageJson.version || 'unknown';
 }
 
 /**

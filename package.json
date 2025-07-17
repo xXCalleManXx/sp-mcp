@@ -1,6 +1,6 @@
 {
   "name": "sp-mcp",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A Model Context Protocol server for system processes",
   "main": "index.ts",
   "module": "index.ts",
