@@ -5,6 +5,7 @@ import { logger } from "../utils/logger.js";
 
 // Create the base schema
 const baseSchema = {
+    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
     fileName: z.string().optional().describe('Optional file name to run specific tests. If not provided, all tests are run.'),
     testName: z.string().optional().describe('Optional test name to run specific tests. If not provided, all tests are run. Can be a regex string'),
 };
@@ -24,7 +25,7 @@ const createTestRunSchema = () => {
 
 export const testRunSchema = createTestRunSchema();
 
-export const testRunHandler = async ({ fileName, testName, isE2E }: { fileName?: string, testName?: string, isE2E?: boolean }) => {
+export const testRunHandler = async ({ projectRoot, fileName, testName, isE2E }: { projectRoot: string, fileName?: string, testName?: string, isE2E?: boolean }) => {
     const config = getConfig();
     
     // If e2e tests are disabled, ignore the isE2E parameter
@@ -78,11 +79,10 @@ export const testRunHandler = async ({ fileName, testName, isE2E }: { fileName?:
         testCommand = config.e2eTestCommand;
     }
 
-    const pwd = process.cwd();
-    logger.debug(`Current working directory: ${pwd}`);
+    logger.debug(`Running tests in project directory: ${projectRoot}`);
 
     // Run the command using the runCLI function
-    const result = await runCLI(baseCommand, [testCommand, ...args]);
+    const result = await runCLI(baseCommand, [testCommand, ...args], projectRoot);
     logger.debug(`Command result: ${result}`);
 
     return {

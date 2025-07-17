@@ -3,10 +3,11 @@ import { runCLI } from "../utils/cli.js";
 import { getConfig } from "../config.js";
 
 export const migrationsGenerateSchema = {
+    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
     name: z.string().describe('Name of migration file.'),    
 };
 
-export const migrationsGenerateHandler = async ({ name }: { name: string }) => {
+export const migrationsGenerateHandler = async ({ projectRoot, name }: { projectRoot: string, name: string }) => {
     const config = getConfig();
     
     if (!config.typeormEnabled) {
@@ -19,7 +20,7 @@ export const migrationsGenerateHandler = async ({ name }: { name: string }) => {
     }
     
     const path = './src/migrations/' + name;
-    const result = await runCLI(config.packageManager, [config.migrationGenerateCommand, path])
+    const result = await runCLI(config.packageManager, [config.migrationGenerateCommand, path], projectRoot)
     return {
         content: [{
             type: "text" as const,

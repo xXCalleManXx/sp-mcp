@@ -4,11 +4,12 @@ import { getConfig } from "../config.js";
 import { logger } from "../utils/logger.js";
 
 export const yarnRunSchema = {
+    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
     command: z.string().describe('The package manager command to run.'),
     args: z.array(z.string()).optional().describe('Optional arguments to pass to the package manager command. If not provided, no additional arguments will be passed.')
 };
 
-export const yarnRunHandler = async ({ command, args = [] }: { command: string, args?: string[] }) => {
+export const yarnRunHandler = async ({ projectRoot, command, args = [] }: { projectRoot: string, command: string, args?: string[] }) => {
     const config = getConfig();
     
     if (config.bannedScripts.includes(command)) {
@@ -21,9 +22,9 @@ export const yarnRunHandler = async ({ command, args = [] }: { command: string, 
     }
 
     const fullCommand = `${config.packageManager} ${command} ${args.join(' ')}`;
-    logger.debug(`Running command: ${fullCommand}`);
+    logger.debug(`Running command: ${fullCommand} in ${projectRoot}`);
     
-    const result = await runCLI(config.packageManager, [command, ...args]);
+    const result = await runCLI(config.packageManager, [command, ...args], projectRoot);
     
     return {
         content: [{
@@ -34,11 +35,12 @@ export const yarnRunHandler = async ({ command, args = [] }: { command: string, 
 };
 
 export const installSchema = {
+    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
     packages: z.array(z.string()),
     dev: z.boolean().optional()
 };
 
-export const installHandler = async ({ packages, dev }: { packages: string[], dev?: boolean }) => {
+export const installHandler = async ({ projectRoot, packages, dev }: { projectRoot: string, packages: string[], dev?: boolean }) => {
     const config = getConfig();
     
     if (!packages || packages.length === 0) {
@@ -61,9 +63,9 @@ export const installHandler = async ({ packages, dev }: { packages: string[], de
     args.push(...packages);
     
     const command = `${config.packageManager} ${args.join(' ')}`;
-    logger.debug(`Installing packages: ${command}`);
+    logger.debug(`Installing packages: ${command} in ${projectRoot}`);
     
-    const result = await runCLI(config.packageManager, args);
+    const result = await runCLI(config.packageManager, args, projectRoot);
     
     return {
         content: [{

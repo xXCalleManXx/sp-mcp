@@ -5,9 +5,9 @@ export const bufferToUtf8 = (buffer: Buffer): string => {
     return buffer.toString('utf8');
 };
 
-export const runCLI = async (baseCommand: string, args: string[]) => {
+export const runCLI = async (baseCommand: string, args: string[], cwd?: string) => {
     try {
-        logger.debug(`Running command: ${baseCommand} ${args.join(' ')}`);
+        logger.debug(`Running command: ${baseCommand} ${args.join(' ')}${cwd ? ` in ${cwd}` : ''}`);
         
         // Set environment to suppress Node.js warnings
         const env = {
@@ -15,7 +15,11 @@ export const runCLI = async (baseCommand: string, args: string[]) => {
             NODE_NO_WARNINGS: '1'
         };
         
-        const result = await $`${baseCommand} ${args}`.env(env).quiet();
+        const command = $`${baseCommand} ${args}`.env(env).quiet();
+        if (cwd) {
+            command.cwd(cwd);
+        }
+        const result = await command;
         return result.text();
     } catch (error: any) {
         logger.error("Error running command:", error);

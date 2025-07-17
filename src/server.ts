@@ -27,19 +27,19 @@ export const createServer = () => {
     // Register development tools
     server.registerTool('dev-logs', {
         title: 'Get development server logs',
-        description: 'Get the logs of the development server. It uses pm2 to get the logs of the process running in the background.',
+        description: 'Get the logs of the development server. It uses pm2 to get the logs of the process running in the background. Requires the project root directory.',
         inputSchema: devLogsSchema
     }, devLogsHandler);
 
     server.registerTool('dev-start', {
         title: 'Start development server',
-        description: 'Start the development server for the project. If the server is already running, nothing will happen. It uses pm2 to run the process in the background.',
+        description: 'Start the development server for the project. If the server is already running, nothing will happen. It uses pm2 to run the process in the background. Requires the project root directory.',
         inputSchema: devStartSchema
     }, devStartHandler);
 
     // Register Node.js tools
     server.registerTool('node', {
-        description: 'Run a Node.js command in the project directory. This tool is useful for running any Node.js command that is not covered by other tools.',
+        description: 'Run a Node.js command in the project directory. This tool is useful for running any Node.js command that is not covered by other tools. Requires the project root directory.',
         inputSchema: nodeSchema
     }, nodeHandler);
 
@@ -47,7 +47,7 @@ export const createServer = () => {
     if (config.testsEnabled || config.e2eTestsEnabled) {
         server.registerTool("run", {
             title: "Run tests",
-            description: "Run test files. All tests are run by default, but you can specify a file name or test name to run specific tests. If you want to run e2e tests, set the isE2E flag to true. All arguments are optional.",
+            description: "Run test files. All tests are run by default, but you can specify a file name or test name to run specific tests. If you want to run e2e tests, set the isE2E flag to true. All arguments are optional. Requires the project root directory.",
             inputSchema: testRunSchema
         }, testRunHandler);
     }
@@ -55,20 +55,20 @@ export const createServer = () => {
     // Register package management tools
     server.registerTool("package-run", {
         title: `Run a ${config.packageManager} command`,
-        description: `Run a ${config.packageManager} command. This tool is useful for running any ${config.packageManager} command that is not covered by other tools.`,
+        description: `Run a ${config.packageManager} command. This tool is useful for running any ${config.packageManager} command that is not covered by other tools. Requires the project root directory.`,
         inputSchema: yarnRunSchema
     }, yarnRunHandler);
 
     server.registerTool("install", {
         title: "Install packages",
-        description: `Install packages using ${config.packageManager}. Can install as regular dependencies or devDependencies.`,
+        description: `Install packages using ${config.packageManager}. Can install as regular dependencies or devDependencies. Requires the project root directory.`,
         inputSchema: installSchema
     }, installHandler);
 
     // Register file management tools
     server.registerTool("delete-project-file", {
         title: "Delete a file from the project",
-        description: "Delete a file from the project. This tool is useful for cleaning up files that are no longer needed.",
+        description: "Delete a file from the project. This tool is useful for cleaning up files that are no longer needed. Requires the project root directory.",
         inputSchema: deleteProjectFileSchema
     }, deleteProjectFileHandler);
 
@@ -76,7 +76,7 @@ export const createServer = () => {
     if (config.typeormEnabled) {
         server.registerTool("migrations-generate", {
             title: "Generate new TypeORM migration files",
-            description: "When entities are changed, this tool can be used to generate new TypeORM migration files. It will create a new migration file in the migrations directory.",
+            description: "When entities are changed, this tool can be used to generate new TypeORM migration files. It will create a new migration file in the migrations directory. Requires the project root directory.",
             inputSchema: migrationsGenerateSchema
         }, migrationsGenerateHandler);
     }
