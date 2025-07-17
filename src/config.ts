@@ -116,25 +116,37 @@ function parseEnvironmentVariables(): Partial<Config> {
  * Parse command line arguments into config object
  */
 export function parseCommandLineArguments(args: string[] = process.argv.slice(2)): Partial<Config> {
-    logger.debug(`Arg mappings: ${JSON.stringify(ARG_MAPPINGS)}`);
     const config: Partial<Config> = {};
     
     for (let i = 0; i < args.length; i++) {
-        // Arg example value: --tests-enabled=true
-        // Arg example key: --tests-enabled
         const arg = args[i];
         
-        if (arg && arg in ARG_MAPPINGS) {
-            const configKey = ARG_MAPPINGS[arg as keyof typeof ARG_MAPPINGS];
+        if (arg && arg.startsWith('--')) {
+            let key: string;
+            let value: string | undefined;
             
-            if (configKey && i + 1 < args.length) {
-                const value = args[i + 1];
+            // Handle --key=value format
+            if (arg.includes('=')) {
+                const [argKey, argValue] = arg.split('=', 2);
+                key = argKey;
+                value = argValue;
+            } 
+            // Handle --key value format
+            else {
+                key = arg;
+                if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+                    value = args[i + 1];
+                    i++; // Skip next argument as it's the value
+                }
+            }
+            
+            if (key in ARG_MAPPINGS && value !== undefined) {
+                const configKey = ARG_MAPPINGS[key as keyof typeof ARG_MAPPINGS];
                 
-                if (value !== undefined) {
+                if (configKey) {
                     const fieldType = getSchemaFieldType(configKey);
                     (config as any)[configKey] = parseValueByType(value, fieldType);
                 }
-                i++; // Skip next argument as it's the value
             }
         }
     }

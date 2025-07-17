@@ -14,7 +14,6 @@ import { logger } from "./utils/logger.js";
 export const createServer = () => {
     // Load configuration first
     const args = process.argv.slice(2);
-    logger.debug(`Loading configuration with arguments: ${JSON.stringify(args)}`);
     const config = loadConfig(args);
 
     logger.debug(`Loaded configuration: ${JSON.stringify(config)}`);
