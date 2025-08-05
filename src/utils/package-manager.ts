@@ -18,7 +18,11 @@ export const runPackageManagerCommand = async (args: string[], projectRoot?: str
     
     // Split the command to handle cases like "lando composer" or "ddev composer"
     const commandParts = packageManagerCommand.split(' ');
+    logger.debug(`Running package manager command: ${packageManagerCommand} with args: ${args.join(' ')}`);
     const baseCommand = commandParts[0];
+    if (!baseCommand) {
+        throw new Error("Package manager command is not configured properly.");
+    }
     const baseArgs = commandParts.slice(1);
     
     // Combine base args with provided args

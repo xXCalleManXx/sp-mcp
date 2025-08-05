@@ -4,10 +4,11 @@ import { getConfig } from "../config.js";
 
 export const migrationsGenerateSchema = {
     projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
-    name: z.string().describe('Name of migration file.'),    
+    name: z.string().describe('Name of migration file.')
 };
 
-export const migrationsGenerateHandler = async ({ projectRoot, name }: { projectRoot: string, name: string }) => {
+export const migrationsGenerateHandler = async (params: unknown) => {
+    const { projectRoot, name } = z.object(migrationsGenerateSchema).parse(params);
     const config = getConfig();
     
     if (!config.typeormEnabled) {

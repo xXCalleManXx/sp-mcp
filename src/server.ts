@@ -4,7 +4,7 @@ import { loadConfig, getConfig, getVersion } from "./config.js";
 
 // Import tool handlers
 import { devLogsSchema, devLogsHandler, devStartSchema, devStartHandler } from "./tools/development.js";
-import { testRunSchema, testRunHandler } from "./tools/testing.js";
+import { getTestRunSchema, testRunHandler } from "./tools/testing.js";
 import { nodeSchema, nodeHandler } from "./tools/node.js";
 import { yarnRunSchema, yarnRunHandler, installSchema, installHandler } from "./tools/package-management.js";
 import { deleteProjectFileSchema, deleteProjectFileHandler } from "./tools/file-management.js";
@@ -18,7 +18,7 @@ export const createServer = () => {
     const config = loadConfig(args);
 
     logger.debug(`Loaded configuration: ${JSON.stringify(config)}`);
-    
+
     // Create an MCP server
     const server = new McpServer({
         name: "development-tools",
@@ -46,10 +46,10 @@ export const createServer = () => {
 
     // Register testing tools (only if at least one test type is enabled)
     if (config.testsEnabled || config.e2eTestsEnabled) {
-        server.registerTool("run", {
+        server.registerTool("test", {
             title: "Run tests",
-            description: "Run test files. All tests are run by default, but you can specify a file name or test name to run specific tests. If you want to run e2e tests, set the isE2E flag to true. All arguments are optional. Requires the project root directory.",
-            inputSchema: testRunSchema
+            description: "Run test files. All tests are run by default, but you can specify a file name or test name to run specific tests. If you want to run e2e tests, set the isE2E flag to true. All arguments are optional. Always requires the project root directory.",
+            inputSchema: getTestRunSchema()
         }, testRunHandler);
     }
 
@@ -88,13 +88,13 @@ export const createServer = () => {
 export const start = async () => {
     // Suppress Node.js warnings that might interfere with MCP JSON protocol
     process.env.NODE_NO_WARNINGS = '1';
-    
+
     const server = createServer();
 
     const version = await getVersion();
 
     logger.debug(`Starting MCP server version ${version}`);
-    
+
     // Start receiving messages on stdin and sending messages on stdout
     const transport = new StdioServerTransport();
     await server.connect(transport);

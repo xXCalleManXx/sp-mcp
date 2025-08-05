@@ -4,23 +4,35 @@ import { getProjectName } from "../utils/project.js";
 import { getConfig } from "../config.js";
 import { logger } from "../utils/logger.js";
 
+// Zod schemas for validation and MCP
 export const devLogsSchema = {
     projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
-    lines: z.number().optional().describe('Optional number of lines to fetch from the logs. If not provided, it defaults to 30. Max 200 lines can be fetched.'),
+    lines: z.number().optional().describe('Optional number of lines to fetch from the logs. If not provided, it defaults to 30. Max 200 lines can be fetched.')
 };
 
-export const devLogsHandler = async ({ projectRoot, lines }: { projectRoot: string, lines?: number }) => {
+export const devStartSchema = {
+    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.')
+};
+
+
+// Handlers with Zod validation
+export const devLogsHandler = async (params: unknown) => {
+    // Validate input with Zod and explicitly type the result
+    const validated = devLogsSchema.parse(params);
+    const projectRoot: string = validated.projectRoot;
+    const lines = validated.lines;
+    
     const config = getConfig();
     const projectName = await getProjectName(projectRoot);
     const logLines = Math.min(lines || 30, 200);
 
     // Replace placeholders in the dev logs command
-    let logsCommand = config.devLogsCommand || 'pm2 logs <projectName> --lines <lines> --nostream';
-    logsCommand = logsCommand
-        .replace('<projectName>', projectName)
-        .replace('<lines>', logLines.toString());
+    // devLogsCommand is guaranteed to be set by loadConfig
+    const logsCommand = config.devLogsCommand!
+        .replaceAll('{{project_name}}', projectName)
+        .replaceAll('{{lines}}', logLines.toString());
 
-    logger.debug(`Running logs command: ${logsCommand} in ${projectRoot}`);
+    logger.debug(`Executing logs command: ${logsCommand}`);
 
     try {
         // Parse and execute the command
@@ -28,7 +40,7 @@ export const devLogsHandler = async ({ projectRoot, lines }: { projectRoot: stri
         const baseCommand = commandParts[0];
         const args = commandParts.slice(1);
         
-        const result = await runCLI(baseCommand, args, projectRoot);
+        const result = await runCLI(baseCommand, args, projectRoot as string);
         
         return {
             content: [{
@@ -36,32 +48,30 @@ export const devLogsHandler = async ({ projectRoot, lines }: { projectRoot: stri
                 text: result
             }]
         };
-    } catch (error) {
-        logger.error(`Failed to get development logs: ${error}`);
+    } catch (error: any) {
         return {
             content: [{
                 type: "text" as const,
-                text: `Failed to get development server logs. Command: ${logsCommand}\nError: ${error}`
-            }]
+                text: `Error getting logs: ${error.message}`
+            }],
+            isError: true
         };
     }
 };
 
-export const devStartSchema = {
-    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
-};
-
-export const devStartHandler = async ({ projectRoot }: { projectRoot: string }) => {
+export const devStartHandler = async (params: unknown) => {
+    // Validate input with Zod and explicitly type the result
+    const validated = devStartSchema.parse(params);
+    const projectRoot: string = validated.projectRoot;
+    
     const config = getConfig();
     const projectName = await getProjectName(projectRoot);
 
     // Replace placeholders in the dev command
-    let devCommand = config.devCommand || `pm2 start ${config.packageManager} --name <projectName> -- dev`;
-    devCommand = devCommand
-        .replace('<projectName>', projectName)
-        .replace('<packageManager>', config.packageManager);
+    // devCommand is guaranteed to be set by loadConfig
+    const devCommand = config.devCommand!.replaceAll('{{project_name}}', projectName);
 
-    logger.debug(`Running dev start command: ${devCommand} in ${projectRoot}`);
+    logger.debug(`Executing dev command: ${devCommand}`);
 
     try {
         // Parse and execute the command
@@ -69,21 +79,21 @@ export const devStartHandler = async ({ projectRoot }: { projectRoot: string }) 
         const baseCommand = commandParts[0];
         const args = commandParts.slice(1);
         
-        const result = await runCLI(baseCommand, args, projectRoot);
+        const result = await runCLI(baseCommand, args, projectRoot as string);
         
         return {
             content: [{
                 type: "text" as const,
-                text: 'Development server started successfully.'
+                text: result
             }]
         };
-    } catch (error) {
-        logger.error(`Failed to start development server: ${error}`);
+    } catch (error: any) {
         return {
             content: [{
                 type: "text" as const,
-                text: `Failed to start development server. Command: ${devCommand}\nError: ${error}`
-            }]
+                text: `Error starting development server: ${error.message}`
+            }],
+            isError: true
         };
     }
 };

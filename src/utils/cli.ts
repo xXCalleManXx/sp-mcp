@@ -5,7 +5,7 @@ export const bufferToUtf8 = (buffer: Buffer): string => {
     return buffer.toString('utf8');
 };
 
-export const runCLI = async (baseCommand: string, args: string[], cwd?: string) => {
+export const runCLI = async (baseCommand: string, args: string[], cwd?: string | undefined) => {
     try {
         logger.debug(`Running command: ${baseCommand} ${args.join(' ')}${cwd ? ` in ${cwd}` : ''}`);
         

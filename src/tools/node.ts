@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { runCLI } from "../utils/cli.js";
 import { logger } from "../utils/logger.js";
+import { jsx } from "react/jsx-runtime";
 
 export const nodeSchema = {
     projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
@@ -8,7 +9,9 @@ export const nodeSchema = {
     args: z.array(z.string()).optional().describe('Optional arguments to pass to the Node.js command. If not provided, no additional arguments will be passed.')
 };
 
-export const nodeHandler = async ({ projectRoot, command, args = [] }: { projectRoot: string, command: string, args?: string[] }) => {
+export const nodeHandler = async (params: unknown) => {
+    const { projectRoot, command, args = [] } = z.object(nodeSchema).parse(params);
+
     logger.debug(`Running Node.js command in project directory: ${projectRoot}`);
 
     // Construct the full command

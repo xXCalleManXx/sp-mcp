@@ -10,7 +10,8 @@ export const yarnRunSchema = {
     args: z.array(z.string()).optional().describe('Optional arguments to pass to the package manager command. If not provided, no additional arguments will be passed.')
 };
 
-export const yarnRunHandler = async ({ projectRoot, command, args = [] }: { projectRoot: string, command: string, args?: string[] }) => {
+export const yarnRunHandler = async (params: unknown) => {
+    const { projectRoot, command, args = [] } = z.object(yarnRunSchema).parse(params);
     const config = getConfig();
     
     if (config.bannedScripts.includes(command)) {
@@ -43,11 +44,12 @@ export const yarnRunHandler = async ({ projectRoot, command, args = [] }: { proj
 
 export const installSchema = {
     projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
-    packages: z.array(z.string()),
-    dev: z.boolean().optional()
+    packages: z.array(z.string()).describe('Array of package names to install.'),
+    dev: z.boolean().optional().describe('Whether to install as development dependencies.')
 };
 
-export const installHandler = async ({ projectRoot, packages, dev }: { projectRoot: string, packages: string[], dev?: boolean }) => {
+export const installHandler = async (params: unknown) => {
+    const { projectRoot, packages, dev } = z.object(installSchema).parse(params);
     const config = getConfig();
     
     if (!packages || packages.length === 0) {
