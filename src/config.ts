@@ -10,7 +10,7 @@ function getDefaultDevCommand(packageManager: 'yarn' | 'npm' | 'bun' | 'composer
     if (packageManager === 'composer') {
         return 'lando start';
     }
-    return `pm2 start ${packageManager} --name {{projectName}} -- dev`;
+    return `pm2 start ${packageManager} --name {{project_name}} -- dev`;
 }
 
 /**
@@ -20,7 +20,7 @@ function getDefaultDevLogsCommand(packageManager: 'yarn' | 'npm' | 'bun' | 'comp
     if (packageManager === 'composer') {
         return 'lando logs --timestamps --service appserver | tail -{{lines}}';
     }
-    return 'pm2 logs {{projectName}} --lines {{lines}} --nostream';
+    return 'pm2 logs {{project_name}} --lines {{lines}} --nostream';
 }
 
 // Define the configuration schema with descriptions
