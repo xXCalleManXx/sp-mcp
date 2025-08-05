@@ -155,14 +155,14 @@ export function parseCommandLineArguments(args: string[] = process.argv.slice(2)
             
             // Handle --key=value format
             if (arg.includes('=')) {
-                const [argKey, argValue] = arg.split('=', 2);
+                const [argKey, argValue] = arg.split('=', 2) as [string, string | undefined];
                 key = argKey;
                 value = argValue;
             } 
             // Handle --key value format
             else {
                 key = arg;
-                if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+                if (i + 1 < args.length && !args[i + 1]?.startsWith('--')) {
                     value = args[i + 1];
                     i++; // Skip next argument as it's the value
                 }

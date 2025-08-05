@@ -18,7 +18,7 @@ export const devStartSchema = {
 // Handlers with Zod validation
 export const devLogsHandler = async (params: unknown) => {
     // Validate input with Zod and explicitly type the result
-    const validated = devLogsSchema.parse(params);
+    const validated = z.object(devLogsSchema).parse(params);
     const projectRoot: string = validated.projectRoot;
     const lines = validated.lines;
     
@@ -38,6 +38,11 @@ export const devLogsHandler = async (params: unknown) => {
         // Parse and execute the command
         const commandParts = logsCommand.split(' ');
         const baseCommand = commandParts[0];
+        if (!baseCommand) {
+            throw new Error("No command specified in devLogsCommand.");
+        }
+        
+        // Extract arguments if any
         const args = commandParts.slice(1);
         
         const result = await runCLI(baseCommand, args, projectRoot as string);
@@ -61,7 +66,7 @@ export const devLogsHandler = async (params: unknown) => {
 
 export const devStartHandler = async (params: unknown) => {
     // Validate input with Zod and explicitly type the result
-    const validated = devStartSchema.parse(params);
+    const validated = z.object(devStartSchema).parse(params);
     const projectRoot: string = validated.projectRoot;
     
     const config = getConfig();
@@ -77,6 +82,9 @@ export const devStartHandler = async (params: unknown) => {
         // Parse and execute the command
         const commandParts = devCommand.split(' ');
         const baseCommand = commandParts[0];
+        if (!baseCommand) {
+            throw new Error("No command specified in devCommand.");
+        }
         const args = commandParts.slice(1);
         
         const result = await runCLI(baseCommand, args, projectRoot as string);
