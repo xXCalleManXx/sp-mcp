@@ -3,7 +3,7 @@ import { runCLI } from "../utils/cli.js";
 import { logger } from "../utils/logger.js";
 
 export const nodeSchema = {
-    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
+    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
     command: z.string().describe('The Node.js command to run. Could also be a file'),
     args: z.array(z.string()).optional().describe('Optional arguments to pass to the Node.js command. If not provided, no additional arguments will be passed.')
 };

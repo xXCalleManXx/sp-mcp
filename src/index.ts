@@ -4,8 +4,8 @@ export * from "./config.js";
 // Utility exports
 export * from "./utils/cli.js";
 export * from "./utils/project.js";
-export * from "./utils/pm2.js";
 export * from "./utils/logger.js";
+export * from "./utils/package-manager.js";
 
 // Tool exports
 export * from "./tools/development.js";

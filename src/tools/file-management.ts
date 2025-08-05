@@ -4,7 +4,7 @@ import { runCLI } from "../utils/cli.js";
 import { logger } from "../utils/logger.js";
 
 export const deleteProjectFileSchema = {
-    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
+    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
     fileName: z.string().describe('The file that must be deleted.'),
 };
 

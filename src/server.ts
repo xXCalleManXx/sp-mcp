@@ -28,13 +28,13 @@ export const createServer = () => {
     // Register development tools
     server.registerTool('dev-logs', {
         title: 'Get development server logs',
-        description: 'Get the logs of the development server. It uses pm2 to get the logs of the process running in the background. Requires the project root directory.',
+        description: 'Get the logs of the development server using the configured logs command. Supports custom log commands for different environments (PM2, Lando, Docker, etc.). Requires the project root directory.',
         inputSchema: devLogsSchema
     }, devLogsHandler);
 
     server.registerTool('dev-start', {
         title: 'Start development server',
-        description: 'Start the development server for the project. If the server is already running, nothing will happen. It uses pm2 to run the process in the background. Requires the project root directory.',
+        description: 'Start the development server for the project using the configured dev command. Supports different environments (PM2, Lando, Docker, etc.). Requires the project root directory.',
         inputSchema: devStartSchema
     }, devStartHandler);
 

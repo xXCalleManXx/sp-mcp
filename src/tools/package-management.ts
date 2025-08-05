@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { runCLI } from "../utils/cli.js";
+import { runPackageManagerCommand } from "../utils/package-manager.js";
 import { getConfig } from "../config.js";
 import { logger } from "../utils/logger.js";
 
 export const yarnRunSchema = {
-    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
+    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
     command: z.string().describe('The package manager command to run.'),
     args: z.array(z.string()).optional().describe('Optional arguments to pass to the package manager command. If not provided, no additional arguments will be passed.')
 };
@@ -21,10 +22,16 @@ export const yarnRunHandler = async ({ projectRoot, command, args = [] }: { proj
         };
     }
 
-    const fullCommand = `${config.packageManager} ${command} ${args.join(' ')}`;
-    logger.debug(`Running command: ${fullCommand} in ${projectRoot}`);
-    
-    const result = await runCLI(config.packageManager, [command, ...args], projectRoot);
+    let result: string;
+
+    // Handle composer differently
+    if (config.packageManager === 'composer') {
+        // For composer, we run commands directly like "composer install" or "composer update"
+        result = await runPackageManagerCommand([command, ...args], projectRoot);
+    } else {
+        // For npm/yarn/bun, we use the package manager to run scripts
+        result = await runPackageManagerCommand([command, ...args], projectRoot);
+    }
     
     return {
         content: [{
@@ -35,7 +42,7 @@ export const yarnRunHandler = async ({ projectRoot, command, args = [] }: { proj
 };
 
 export const installSchema = {
-    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
+    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
     packages: z.array(z.string()),
     dev: z.boolean().optional()
 };
@@ -52,20 +59,35 @@ export const installHandler = async ({ projectRoot, packages, dev }: { projectRo
         };
     }
 
-    const args = ['add'];
-    
-    // Add --dev flag if installing as devDependencies
-    if (dev) {
-        args.push('--dev');
+    let args: string[];
+
+    // Handle composer differently
+    if (config.packageManager === 'composer') {
+        args = ['require'];
+        
+        if (dev) {
+            args.push('--dev');
+        }
+        
+        args.push(...packages);
+    } else {
+        // Handle npm/yarn/bun
+        args = ['add'];
+        
+        // Add --dev flag if installing as devDependencies
+        if (dev) {
+            if (config.packageManager === 'npm') {
+                args.push('--save-dev');
+            } else {
+                args.push('--dev');
+            }
+        }
+        
+        // Add all packages to the command
+        args.push(...packages);
     }
     
-    // Add all packages to the command
-    args.push(...packages);
-    
-    const command = `${config.packageManager} ${args.join(' ')}`;
-    logger.debug(`Installing packages: ${command} in ${projectRoot}`);
-    
-    const result = await runCLI(config.packageManager, args, projectRoot);
+    const result = await runPackageManagerCommand(args, projectRoot);
     
     return {
         content: [{

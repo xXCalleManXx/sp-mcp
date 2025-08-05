@@ -3,11 +3,40 @@ import { logger } from "./utils/logger";
 import { runCLI } from "./utils/cli";
 import packageJson from "../package.json";
 
+/**
+ * Get default dev command based on package manager
+ */
+function getDefaultDevCommand(packageManager: 'yarn' | 'npm' | 'bun' | 'composer'): string {
+    if (packageManager === 'composer') {
+        return 'lando start';
+    }
+    return `pm2 start ${packageManager} --name <projectName> -- dev`;
+}
+
+/**
+ * Get default dev logs command based on package manager
+ */
+function getDefaultDevLogsCommand(packageManager: 'yarn' | 'npm' | 'bun' | 'composer'): string {
+    if (packageManager === 'composer') {
+        return 'lando logs --timestamps --service appserver | tail -1000';
+    }
+    return 'pm2 logs <projectName> --lines <lines> --nostream';
+}
+
 // Define the configuration schema with descriptions
 const ConfigSchema = z.object({
-    packageManager: z.enum(['yarn', 'npm', 'bun'])
+    packageManager: z.enum(['yarn', 'npm', 'bun', 'composer'])
         .default('yarn')
         .describe('Package manager to use for running commands'),
+    packageManagerCommand: z.string()
+        .optional()
+        .describe('Custom command to run the package manager (e.g., "lando composer", "ddev composer", "/usr/local/bin/composer"). Defaults to the package manager name.'),
+    devCommand: z.string()
+        .optional()
+        .describe('Absolute command to start development server. Defaults based on package manager.'),
+    devLogsCommand: z.string()
+        .optional()
+        .describe('Absolute command to get development server logs. Defaults based on package manager.'),
     e2eTestsEnabled: z.boolean()
         .default(false)
         .describe('Enable end-to-end tests functionality'),
@@ -20,9 +49,6 @@ const ConfigSchema = z.object({
     testCommand: z.string()
         .default('test')
         .describe('Command to run unit tests in package.json'),
-    devCommand: z.string()
-        .default('dev')
-        .describe('Command to start development server in package.json'),
     bannedScripts: z.array(z.string())
         .default(['deploy:prod', 'dev', 'add'])
         .describe('List of package.json scripts that are not allowed to run'),
@@ -177,6 +203,19 @@ export function loadConfig(args?: string[]): Config {
         ...argConfig
     };
     
+    // Apply dynamic defaults for devCommand and devLogsCommand if not provided
+    const packageManager = mergedConfig.packageManager || 'yarn';
+    if (!mergedConfig.devCommand) {
+        mergedConfig.devCommand = getDefaultDevCommand(packageManager as 'yarn' | 'npm' | 'bun' | 'composer');
+    }
+    if (!mergedConfig.devLogsCommand) {
+        mergedConfig.devLogsCommand = getDefaultDevLogsCommand(packageManager as 'yarn' | 'npm' | 'bun' | 'composer');
+    }
+    // Set default packageManagerCommand if not provided
+    if (!mergedConfig.packageManagerCommand) {
+        mergedConfig.packageManagerCommand = packageManager;
+    }
+    
     // Validate and apply defaults
     const result = ConfigSchema.parse(mergedConfig);
     
@@ -215,7 +254,6 @@ export const getVersion = async () => {
  * Generate configuration help dynamically from schema
  */
 export async function printConfigHelp(): Promise<void> {
-    const schemaKeys = Object.keys(ConfigSchema.shape) as Array<keyof Config>;
     const version = await getVersion();
     
     logger.debug(`
@@ -223,35 +261,44 @@ MCP Server Configuration Help (version ${version}):
 
 Environment Variables:`);
     
-    schemaKeys.forEach(key => {
-        const envKey = `MCP_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
-        const field = ConfigSchema.shape[key];
-        const description = field.description || 'No description available';
-        const defaultValue = field._def.defaultValue ? field._def.defaultValue() : 'none';
-        const fieldType = getSchemaFieldType(key);
-        
-        let typeHint = '';
-        if (fieldType === 'boolean') {
-            typeHint = ' (true|false)';
-        } else if (fieldType === 'array') {
-            typeHint = ' (comma-separated list)';
-        } else if (fieldType === 'enum') {
-            const enumValues = field instanceof z.ZodDefault 
-                ? (field._def.innerType as z.ZodEnum<any>)._def.values 
-                : (field as z.ZodEnum<any>)._def.values;
-            typeHint = ` (${enumValues.join('|')})`;
-        }
-        
-        logger.error(`  ${envKey.padEnd(30)} ${description}${typeHint}, default: ${JSON.stringify(defaultValue)}`);
+    // Manually list the configuration options with their details
+    const configOptions = [
+        { key: 'MCP_PACKAGE_MANAGER', description: 'Package manager to use for running commands (yarn|npm|bun|composer)', default: 'yarn' },
+        { key: 'MCP_PACKAGE_MANAGER_COMMAND', description: 'Custom command to run the package manager (e.g., "lando composer", "ddev composer")', default: 'dynamic (same as package manager)' },
+        { key: 'MCP_DEV_COMMAND', description: 'Absolute command to start development server', default: 'dynamic (based on package manager)' },
+        { key: 'MCP_DEV_LOGS_COMMAND', description: 'Absolute command to get development server logs', default: 'dynamic (based on package manager)' },
+        { key: 'MCP_E2E_TESTS_ENABLED', description: 'Enable end-to-end tests functionality (true|false)', default: 'false' },
+        { key: 'MCP_E2E_TEST_COMMAND', description: 'Command to run e2e tests in package.json', default: 'test:e2e' },
+        { key: 'MCP_TESTS_ENABLED', description: 'Enable unit tests functionality (true|false)', default: 'false' },
+        { key: 'MCP_TEST_COMMAND', description: 'Command to run unit tests in package.json', default: 'test' },
+        { key: 'MCP_BANNED_SCRIPTS', description: 'List of package.json scripts that are not allowed to run (comma-separated)', default: 'deploy:prod,dev,add' },
+        { key: 'MCP_TYPEORM_ENABLED', description: 'Enable TypeORM migration features (true|false)', default: 'false' },
+        { key: 'MCP_MIGRATION_GENERATE_COMMAND', description: 'Command to generate TypeORM migration files', default: 'migration:generate' }
+    ];
+    
+    configOptions.forEach(option => {
+        logger.error(`  ${option.key.padEnd(30)} ${option.description}, default: ${option.default}`);
     });
     
     logger.error(`
 Command Line Arguments (override environment variables):`);
     
-    schemaKeys.forEach(key => {
-        const argKey = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
-        const envKey = `MCP_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
-        logger.error(`  ${argKey.padEnd(35)} Same as ${envKey}`);
+    const argOptions = [
+        { arg: '--package-manager', env: 'MCP_PACKAGE_MANAGER' },
+        { arg: '--package-manager-command', env: 'MCP_PACKAGE_MANAGER_COMMAND' },
+        { arg: '--dev-command', env: 'MCP_DEV_COMMAND' },
+        { arg: '--dev-logs-command', env: 'MCP_DEV_LOGS_COMMAND' },
+        { arg: '--e2e-tests-enabled', env: 'MCP_E2E_TESTS_ENABLED' },
+        { arg: '--e2e-test-command', env: 'MCP_E2E_TEST_COMMAND' },
+        { arg: '--tests-enabled', env: 'MCP_TESTS_ENABLED' },
+        { arg: '--test-command', env: 'MCP_TEST_COMMAND' },
+        { arg: '--banned-scripts', env: 'MCP_BANNED_SCRIPTS' },
+        { arg: '--typeorm-enabled', env: 'MCP_TYPEORM_ENABLED' },
+        { arg: '--migration-generate-command', env: 'MCP_MIGRATION_GENERATE_COMMAND' }
+    ];
+    
+    argOptions.forEach(option => {
+        logger.error(`  ${option.arg.padEnd(35)} Same as ${option.env}`);
     });
     
     logger.error(`
@@ -264,6 +311,18 @@ Examples:
   
   # Mixed (args override env)
   MCP_PACKAGE_MANAGER=yarn bun run index.ts --package-manager npm
+  
+  # Composer project with Lando
+  MCP_PACKAGE_MANAGER=composer bun run index.ts
+  
+  # Lando/DDEV Composer setup
+  MCP_PACKAGE_MANAGER=composer MCP_PACKAGE_MANAGER_COMMAND="lando composer" bun run index.ts
+  
+  # Custom dev commands
+  bun run index.ts --dev-command "docker-compose up -d" --dev-logs-command "docker-compose logs -f --tail=100"
+  
+  # DDEV with custom composer path
+  bun run index.ts --package-manager composer --package-manager-command "ddev composer"
   
   # Show help
   bun run index.ts --help

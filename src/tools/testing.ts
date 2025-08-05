@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { runCLI } from "../utils/cli.js";
+import { runPackageManagerCommand } from "../utils/package-manager.js";
 import { getConfig } from "../config.js";
 import { logger } from "../utils/logger.js";
 
 // Create the base schema
 const baseSchema = {
-    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
+    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
     fileName: z.string().optional().describe('Optional file name to run specific tests. If not provided, all tests are run.'),
     testName: z.string().optional().describe('Optional test name to run specific tests. If not provided, all tests are run. Can be a regex string'),
 };
@@ -52,7 +53,6 @@ export const testRunHandler = async ({ projectRoot, fileName, testName, isE2E }:
 
     let _isE2E = effectiveIsE2E;
 
-    const baseCommand = config.packageManager;
     const args: string[] = [];
 
     let testCommand = config.testCommand;
@@ -81,8 +81,8 @@ export const testRunHandler = async ({ projectRoot, fileName, testName, isE2E }:
 
     logger.debug(`Running tests in project directory: ${projectRoot}`);
 
-    // Run the command using the runCLI function
-    const result = await runCLI(baseCommand, [testCommand, ...args], projectRoot);
+    // Run the command using the runPackageManagerCommand function
+    const result = await runPackageManagerCommand([testCommand, ...args], projectRoot);
     logger.debug(`Command result: ${result}`);
 
     return {

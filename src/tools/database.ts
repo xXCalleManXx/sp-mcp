@@ -3,7 +3,7 @@ import { runCLI } from "../utils/cli.js";
 import { getConfig } from "../config.js";
 
 export const migrationsGenerateSchema = {
-    projectRoot: z.string().describe('The root directory of the project where package.json is located.'),
+    projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
     name: z.string().describe('Name of migration file.'),    
 };
 
