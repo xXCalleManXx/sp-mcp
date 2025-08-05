@@ -6,6 +6,7 @@ import { loadConfig, getConfig, getVersion } from "./config.js";
 import { devLogsSchema, devLogsHandler, devStartSchema, devStartHandler } from "./tools/development.js";
 import { getTestRunSchema, testRunHandler } from "./tools/testing.js";
 import { nodeSchema, nodeHandler } from "./tools/node.js";
+import { landoSchema, landoHandler } from "./tools/lando.js";
 import { yarnRunSchema, yarnRunHandler, installSchema, installHandler } from "./tools/package-management.js";
 import { deleteProjectFileSchema, deleteProjectFileHandler } from "./tools/file-management.js";
 import { migrationsGenerateSchema, migrationsGenerateHandler } from "./tools/database.js";
@@ -43,6 +44,14 @@ export const createServer = () => {
         description: 'Run a Node.js command in the project directory. This tool is useful for running any Node.js command that is not covered by other tools. Requires the project root directory.',
         inputSchema: nodeSchema
     }, nodeHandler);
+
+    if (config.packageManager === 'composer') {
+        server.registerTool("lando", {
+            title: "Run a Lando command",
+            description: "Run a Lando command in the project directory. This tool is useful for running any Lando command that is not covered by other tools. Requires the project root directory.",
+            inputSchema: landoSchema
+        }, landoHandler);
+    }
 
     // Register testing tools (only if at least one test type is enabled)
     if (config.testsEnabled || config.e2eTestsEnabled) {
