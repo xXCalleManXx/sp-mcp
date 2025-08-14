@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { runCLI } from "../utils/cli.js";
 import { logger } from "../utils/logger.js";
-import { jsx } from "react/jsx-runtime";
 
 export const nodeSchema = {
     projectRoot: z.string().describe('The root directory of the project where package.json or composer.json is located.'),
