@@ -57,9 +57,9 @@ export const graphqlCallHandler = async (params: unknown) => {
         parsedHeaders = { ...parsedHeaders, ...customHeaders };
     }
 
-    // Add Basic Auth if username and password are provided
-    if (username && password) {
-        parsedHeaders['Authorization'] = createBasicAuthHeader(username, password);
+    // Add Basic Auth if at least one of username or password is provided
+    if (username || password) {
+        parsedHeaders['Authorization'] = createBasicAuthHeader(username || '', password || '');
     }
 
     // Prepare GraphQL request body
@@ -107,9 +107,9 @@ export const graphqlSchemaHandler = async (params: unknown) => {
         'Content-Type': 'application/json'
     };
 
-    // Add Basic Auth if username and password are provided
-    if (username && password) {
-        headers['Authorization'] = createBasicAuthHeader(username, password);
+    // Add Basic Auth if at least one of username or password is provided
+    if (username || password) {
+        headers['Authorization'] = createBasicAuthHeader(username || '', password || '');
     }
 
     // GraphQL introspection query
