@@ -72,6 +72,7 @@ The server can be configured via environment variables or command line arguments
 | `MCP_BANNED_SCRIPTS` | List of package.json scripts that are not allowed to run | `comma-separated list` | `deploy:prod,dev,add` |
 | `MCP_TYPEORM_ENABLED` | Enable TypeORM migration features | `true\|false` | `false` |
 | `MCP_MIGRATION_GENERATE_COMMAND` | Command to generate TypeORM migration files | `string` | `migration:generate` |
+| `MCP_GRAPHQL_ENABLED` | Enable GraphQL tools functionality | `true\|false` | `false` |
 
 ### Command Line Arguments
 
@@ -88,6 +89,7 @@ All environment variables have corresponding command line arguments that overrid
 | `--banned-scripts` | Same as `MCP_BANNED_SCRIPTS` | `--banned-scripts deploy:prod,build:prod` |
 | `--typeorm-enabled` | Same as `MCP_TYPEORM_ENABLED` | `--typeorm-enabled true` |
 | `--migration-generate-command` | Same as `MCP_MIGRATION_GENERATE_COMMAND` | `--migration-generate-command migration:generate` |
+| `--graphql-enabled` | Same as `MCP_GRAPHQL_ENABLED` | `--graphql-enabled true` |
 
 ## Available Tools
 
@@ -149,6 +151,24 @@ The server provides the following MCP tools:
   - Uses configured `migrationGenerateCommand` (default: `migration:generate`)
   - Creates migration files in the migrations directory
 
+#### GraphQL Tools
+**Requirements**: `MCP_GRAPHQL_ENABLED=true`
+
+- **`graphql-call`** - Execute GraphQL queries and mutations
+  - Make requests to any GraphQL endpoint
+  - Supports GraphQL queries and mutations
+  - Optional JSON variables for parameterized queries
+  - Optional custom headers
+  - Optional Basic authentication (username/password)
+  - Returns the complete GraphQL response
+
+- **`graphql-schema`** - Fetch GraphQL schema via introspection
+  - Retrieves the full GraphQL schema from any endpoint
+  - Uses introspection query to get complete type information
+  - Saves schema as JSON to specified file location
+  - Optional Basic authentication (username/password)
+  - Creates directories if they don't exist
+
 ### Tool Availability Summary
 
 | Tool | Always Available | Requires Configuration |
@@ -161,6 +181,8 @@ The server provides the following MCP tools:
 | `node` | ✅ | None |
 | `run` | ❌ | `MCP_TESTS_ENABLED=true` or `MCP_E2E_TESTS_ENABLED=true` |
 | `migrations-generate` | ❌ | `MCP_TYPEORM_ENABLED=true` |
+| `graphql-call` | ❌ | `MCP_GRAPHQL_ENABLED=true` |
+| `graphql-schema` | ❌ | `MCP_GRAPHQL_ENABLED=true` |
 
 ## Examples
 
@@ -219,6 +241,18 @@ bunx sp-mcp \
   --package-manager npm \
   --typeorm-enabled true \
   --migration-generate-command "typeorm:migration:generate"
+```
+
+### GraphQL Development
+
+```bash
+# Enable GraphQL tools for API development
+bunx sp-mcp \
+  --package-manager npm \
+  --graphql-enabled true
+
+# Use with environment variable
+MCP_GRAPHQL_ENABLED=true bunx sp-mcp
 ```
 
 ## Configuration Testing

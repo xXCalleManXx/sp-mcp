@@ -10,6 +10,7 @@ import { landoSchema, landoHandler } from "./tools/lando.js";
 import { yarnRunSchema, yarnRunHandler, installSchema, installHandler } from "./tools/package-management.js";
 import { deleteProjectFileSchema, deleteProjectFileHandler } from "./tools/file-management.js";
 import { migrationsGenerateSchema, migrationsGenerateHandler } from "./tools/database.js";
+import { graphqlCallSchema, graphqlCallHandler, graphqlSchemaSchema, graphqlSchemaHandler } from "./tools/graphql.js";
 import { logger } from "./utils/logger.js";
 import { runCLI } from "./utils/cli.js";
 
@@ -89,6 +90,21 @@ export const createServer = () => {
             description: "When entities are changed, this tool can be used to generate new TypeORM migration files. It will create a new migration file in the migrations directory. Requires the project root directory.",
             inputSchema: migrationsGenerateSchema
         }, migrationsGenerateHandler);
+    }
+
+    // Register GraphQL tools (only if GraphQL is enabled)
+    if (config.graphqlEnabled) {
+        server.registerTool("graphql-call", {
+            title: "Call GraphQL endpoint",
+            description: "Execute GraphQL queries or mutations against a GraphQL endpoint. Supports Basic authentication and custom headers.",
+            inputSchema: graphqlCallSchema
+        }, graphqlCallHandler);
+
+        server.registerTool("graphql-schema", {
+            title: "Fetch GraphQL schema",
+            description: "Fetch the full GraphQL schema from an endpoint using introspection and save it to a file. Supports Basic authentication.",
+            inputSchema: graphqlSchemaSchema
+        }, graphqlSchemaHandler);
     }
 
     return server;

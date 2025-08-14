@@ -29,7 +29,8 @@
     "url": "https://github.com/xXCalleManXx/sp-mcp.git"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "tsx": "^4.20.4"
   },
   "peerDependencies": {
     "typescript": "^5"

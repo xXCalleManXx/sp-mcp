@@ -57,7 +57,10 @@ const ConfigSchema = z.object({
         .describe('Enable TypeORM migration features'),
     migrationGenerateCommand: z.string()
         .default('migration:generate')
-        .describe('Command to generate TypeORM migration files')
+        .describe('Command to generate TypeORM migration files'),
+    graphqlEnabled: z.boolean()
+        .default(false)
+        .describe('Enable GraphQL tools functionality')
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -273,7 +276,8 @@ Environment Variables:`);
         { key: 'MCP_TEST_COMMAND', description: 'Command to run unit tests in package.json', default: 'test' },
         { key: 'MCP_BANNED_SCRIPTS', description: 'List of package.json scripts that are not allowed to run (comma-separated)', default: 'deploy:prod,dev,add' },
         { key: 'MCP_TYPEORM_ENABLED', description: 'Enable TypeORM migration features (true|false)', default: 'false' },
-        { key: 'MCP_MIGRATION_GENERATE_COMMAND', description: 'Command to generate TypeORM migration files', default: 'migration:generate' }
+        { key: 'MCP_MIGRATION_GENERATE_COMMAND', description: 'Command to generate TypeORM migration files', default: 'migration:generate' },
+        { key: 'MCP_GRAPHQL_ENABLED', description: 'Enable GraphQL tools functionality (true|false)', default: 'false' }
     ];
     
     configOptions.forEach(option => {
@@ -294,7 +298,8 @@ Command Line Arguments (override environment variables):`);
         { arg: '--test-command', env: 'MCP_TEST_COMMAND' },
         { arg: '--banned-scripts', env: 'MCP_BANNED_SCRIPTS' },
         { arg: '--typeorm-enabled', env: 'MCP_TYPEORM_ENABLED' },
-        { arg: '--migration-generate-command', env: 'MCP_MIGRATION_GENERATE_COMMAND' }
+        { arg: '--migration-generate-command', env: 'MCP_MIGRATION_GENERATE_COMMAND' },
+        { arg: '--graphql-enabled', env: 'MCP_GRAPHQL_ENABLED' }
     ];
     
     argOptions.forEach(option => {
