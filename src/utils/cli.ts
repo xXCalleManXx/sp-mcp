@@ -41,11 +41,10 @@ export const runCLI = async (baseCommand: string, args: string[], cwd?: string |
                     logger.error("Exit code:", code);
                     logger.debug("Stdout:", stdout);
                     logger.debug("Stderr:", stderr);
-                    
-                    resolve(combinedOutput);
-                } else {
-                    resolve(stdout);
                 }
+                
+                // Always return combined output regardless of exit code
+                resolve(combinedOutput);
             });
 
             child.on('error', (error) => {
