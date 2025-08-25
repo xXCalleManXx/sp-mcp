@@ -20,7 +20,7 @@ function getDefaultDevLogsCommand(packageManager: 'yarn' | 'npm' | 'bun' | 'comp
     if (packageManager === 'composer') {
         return 'lando logs --timestamps --service appserver | tail -{{lines}}';
     }
-    return 'pm2 logs {{project_name}} --lines {{lines}} --nostream --raw';
+    return 'pm2 logs {{project_name}} --lines {{lines}} --nostream --raw 2>&1';
 }
 
 // Define the configuration schema with descriptions
