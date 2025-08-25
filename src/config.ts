@@ -10,7 +10,7 @@ function getDefaultDevCommand(packageManager: 'yarn' | 'npm' | 'bun' | 'composer
     if (packageManager === 'composer') {
         return 'lando start';
     }
-    return `pm2 start ${packageManager} --name {{project_name}} --log ~/.pm2/logs/{{project_name}}.log -- dev`;
+    return `bash -c 'if pm2 list | grep -q "{{project_name}}.*online"; then echo "Already running"; elif pm2 list | grep -q "{{project_name}}"; then pm2 delete {{project_name}} && pm2 start ${packageManager} --name {{project_name}} --log ~/.pm2/logs/{{project_name}}.log -- dev; else pm2 start ${packageManager} --name {{project_name}} --log ~/.pm2/logs/{{project_name}}.log -- dev; fi'`;
 }
 
 /**

@@ -35,7 +35,28 @@ export const devLogsHandler = async (params: unknown) => {
     logger.debug(`Executing logs command: ${logsCommand}`);
 
     try {
-        // Parse and execute the command
+        // Special handling for bash -c commands
+        if (logsCommand.startsWith('bash -c ')) {
+            // Extract the script part after "bash -c "
+            const scriptPart = logsCommand.substring(8); // Remove "bash -c" (note: 8 chars, not 9)
+            
+            // Remove outer quotes (single or double) if present
+            let cleanScript = scriptPart.trim();
+            if ((cleanScript.startsWith("'") && cleanScript.endsWith("'")) ||
+                (cleanScript.startsWith('"') && cleanScript.endsWith('"'))) {
+                cleanScript = cleanScript.slice(1, -1);
+            }
+            
+            const result = await runCLI('bash', ['-c', cleanScript], projectRoot as string);
+            return {
+                content: [{
+                    type: "text" as const,
+                    text: result
+                }]
+            };
+        }
+        
+        // Parse and execute regular commands
         const commandParts = logsCommand.split(' ');
         const baseCommand = commandParts[0];
         if (!baseCommand) {
@@ -79,7 +100,28 @@ export const devStartHandler = async (params: unknown) => {
     logger.debug(`Executing dev command: ${devCommand}`);
 
     try {
-        // Parse and execute the command
+        // Special handling for bash -c commands
+        if (devCommand.startsWith('bash -c ')) {
+            // Extract the script part after "bash -c "
+            const scriptPart = devCommand.substring(8); // Remove "bash -c" (note: 8 chars, not 9)
+            
+            // Remove outer quotes (single or double) if present
+            let cleanScript = scriptPart.trim();
+            if ((cleanScript.startsWith("'") && cleanScript.endsWith("'")) ||
+                (cleanScript.startsWith('"') && cleanScript.endsWith('"'))) {
+                cleanScript = cleanScript.slice(1, -1);
+            }
+            
+            const result = await runCLI('bash', ['-c', cleanScript], projectRoot as string);
+            return {
+                content: [{
+                    type: "text" as const,
+                    text: result
+                }]
+            };
+        }
+        
+        // Parse and execute regular commands
         const commandParts = devCommand.split(' ');
         const baseCommand = commandParts[0];
         if (!baseCommand) {
